@@ -2,292 +2,271 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelCraft — Minecraft Papercraft Editor</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Craft Workbench</title>
     <style>
         :root {
-            --bg: #f4f3ef;
-            --surface: #ffffff;
-            --surface2: #f0efe9;
-            --border: #e2e0d8;
-            --border2: #d0cec4;
-            --text: #1a1917;
-            --text2: #6b6860;
-            --accent: #2d6a4f;
-            --accent2: #52b788;
-            --accent-light: #d8f3dc;
-            --danger: #c1392b;
-            --panel-w: 260px;
-            --layer-w: 220px;
-            --header-h: 48px;
-            --radius: 8px;
-            --shadow: 0 2px 8px rgba(0,0,0,0.08);
-            --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+            --wood: #8d6e63;
+            --clay: #bcaaa4;
+            --accent: #ff7043;
+            --bg: #efebe9;
+            --panel: #ffffff;
         }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-            font-family: 'Syne', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
             display: flex;
             flex-direction: column;
-            user-select: none;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Prevents tablet scrolling while drawing */
         }
 
+        /* Workbench Header */
         header {
-            height: var(--header-h);
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
+            background: var(--wood);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+
+        .logo { font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; }
+
+        .main-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Tool Sidebar */
+        .sidebar {
+            width: 80px;
+            background: var(--panel);
+            border-right: 1px solid #d7ccc8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px 0;
+            gap: 20px;
+        }
+
+        .tool {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            border: 2px solid #d7ccc8;
             display: flex;
             align-items: center;
-            padding: 0 16px;
-            gap: 16px;
-            z-index: 100;
-            box-shadow: var(--shadow);
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.2s;
+            background: white;
         }
 
-        .logo { font-size: 18px; font-weight: 800; color: var(--accent); display: flex; align-items: center; gap: 8px; }
-        .logo-icon { width: 28px; height: 28px; background: var(--accent); border-radius: 6px; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 2px; padding: 4px; }
-        .logo-icon span { background: white; border-radius: 1px; }
+        .tool.active {
+            border-color: var(--accent);
+            background: #fff3e0;
+            transform: scale(1.1);
+        }
 
-        .header-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .header-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 5px 12px; font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; transition: 0.15s; }
-        .header-btn:hover { background: var(--accent-light); color: var(--accent); }
-        .header-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
+        /* Workspace */
+        .workspace {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+        }
 
-        .app-body { flex: 1; display: flex; overflow: hidden; }
-        .left-panel { width: var(--panel-w); background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
-        .panel-section { border-bottom: 1px solid var(--border); padding: 12px; }
-        .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+        .canvas-container {
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            border: 8px solid white;
+            border-radius: 4px;
+        }
 
-        .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-        .setting-label { font-size: 12px; font-family: 'DM Mono', monospace; color: var(--text2); }
-        .setting-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px; width: 60px; text-align: center; font-family: 'DM Mono', monospace; }
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            cursor: crosshair;
+        }
 
-        .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .tool-btn { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface2); cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-family: 'DM Mono', monospace; }
-        .tool-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        /* Right Control Panel */
+        .controls {
+            width: 220px;
+            background: var(--panel);
+            border-left: 1px solid #d7ccc8;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
 
-        .canvas-area { flex: 1; background: var(--bg); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .canvas-wrapper { position: relative; box-shadow: var(--shadow-lg); background: white; }
-        #mainCanvas { display: block; image-rendering: pixelated; }
-        #gridCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        .control-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: #5d4037;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
 
-        .right-panel { width: var(--layer-w); background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
-        .layers-list { flex: 1; overflow-y: auto; padding: 8px; }
-        .layer-item { display: flex; align-items: center; padding: 8px; background: var(--surface2); border-radius: var(--radius); margin-bottom: 4px; cursor: pointer; font-size: 11px; font-weight: 600; }
-        .layer-item.active { background: var(--accent-light); border: 1px solid var(--accent2); }
+        input[type="color"] {
+            width: 100%;
+            height: 40px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
-        .modal-overlay.open { display: flex; }
-        .modal { background: white; padding: 24px; border-radius: 16px; width: 340px; box-shadow: var(--shadow-lg); }
-        .modal h2 { font-size: 18px; margin-bottom: 12px; }
-        .modal-btns { display: flex; gap: 8px; margin-top: 20px; }
-        .modal-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); cursor: pointer; font-family: 'DM Mono', monospace; }
-        .modal-btn.confirm { background: var(--accent); color: white; }
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
 
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: #1a1917; color: white; padding: 10px 20px; border-radius: 20px; font-size: 12px; transition: 0.3s; z-index: 2000; }
-        .toast.show { transform: translateX(-50%) translateY(0); }
-        
-        .swatches-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
-        .swatch { aspect-ratio: 1; border-radius: 3px; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); }
+        .btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo">
-        <div class="logo-icon"><span></span><span></span><span></span><span></span></div>
-        PixelCraft
-    </div>
-    <div class="header-center">
-        <button class="header-btn" id="undoBtn">Undo</button>
-        <button class="header-btn" id="redoBtn">Redo</button>
-        <button class="header-btn primary" id="exportBtn">Export PNG</button>
-    </div>
+    <div class="logo">CRAFT WORKBENCH</div>
+    <div class="status" id="statusText">Ready to build</div>
 </header>
 
-<div class="app-body">
-    <div class="left-panel">
-        <div class="panel-section">
-            <div class="panel-title">Grid</div>
-            <div class="setting-row">
-                <span class="setting-label">Cols</span>
-                <input type="number" id="gridCols" class="setting-input" value="32">
-            </div>
-            <div class="setting-row">
-                <span class="setting-label">Rows</span>
-                <input type="number" id="gridRows" class="setting-input" value="32">
-            </div>
-            <button class="header-btn" id="applyGridBtn" style="width:100%">Apply Size</button>
-        </div>
+<div class="main-layout">
+    <div class="sidebar">
+        <div class="tool active" id="pencilTool" title="Pencil">✏️</div>
+        <div class="tool" id="eraserTool" title="Eraser">🧹</div>
+        <div class="tool" id="clearBtn" title="Clear Canvas">🗑️</div>
+    </div>
 
-        <div class="panel-section">
-            <div class="panel-title">Tools</div>
-            <div class="tools-grid">
-                <button class="tool-btn active" data-tool="pencil">✏️ Pencil</button>
-                <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
-            </div>
-        </div>
-
-        <div class="panel-section">
-            <div class="panel-title">Colors</div>
-            <input type="color" id="colorPicker" value="#2d6a4f" style="width:100%; height:40px; border:none; cursor:pointer; margin-bottom:10px;">
-            <div class="swatches-grid" id="swatchesGrid"></div>
+    <div class="workspace">
+        <div class="canvas-container">
+            <canvas id="craftCanvas"></canvas>
         </div>
     </div>
 
-    <div class="canvas-area">
-        <div class="canvas-wrapper" id="canvasWrapper">
-            <canvas id="mainCanvas"></canvas>
-            <canvas id="gridCanvas"></canvas>
+    <div class="controls">
+        <div class="control-group">
+            <label>MATERIAL COLOR</label>
+            <input type="color" id="colorPicker" value="#8d6e63">
         </div>
-    </div>
+        
+        <div class="control-group">
+            <label>CANVAS SIZE</label>
+            <select id="canvasSize" style="width: 100%; padding: 5px;">
+                <option value="16">16 x 16 (Small)</option>
+                <option value="32" selected>32 x 32 (Standard)</option>
+                <option value="64">64 x 64 (Detailed)</option>
+            </select>
+        </div>
 
-    <div class="right-panel">
-        <div class="panel-section"><div class="panel-title">Layers</div></div>
-        <div class="layers-list" id="layersList"></div>
+        <button class="btn" id="downloadBtn">SAVE DESIGN</button>
     </div>
 </div>
 
-<div class="toast" id="toast">Changes Saved!</div>
-
 <script>
-    const STATE = {
-        cols: 32, rows: 32, tool: 'pencil', color: '#2d6a4f',
-        isDrawing: false, layers: [], activeLayerIndex: 0
-    };
-
-    const mainCanvas = document.getElementById('mainCanvas');
-    const gridCanvas = document.getElementById('gridCanvas');
-    const ctx = mainCanvas.getContext('2d');
-    const gctx = gridCanvas.getContext('2d');
-    const cellSize = 15;
+    const canvas = document.getElementById('craftCanvas');
+    const ctx = canvas.getContext('2d');
+    const colorPicker = document.getElementById('colorPicker');
+    const sizeSelect = document.getElementById('canvasSize');
+    
+    // Config
+    let gridSize = 32;
+    const displaySize = 512; // Visual size on screen
+    let isDrawing = false;
+    let currentTool = 'pencil';
 
     function initCanvas() {
-        const w = STATE.cols * cellSize;
-        const h = STATE.rows * cellSize;
-        mainCanvas.width = w; mainCanvas.height = h;
-        gridCanvas.width = w; gridCanvas.height = h;
-        renderAll();
-        drawGrid();
+        gridSize = parseInt(sizeSelect.value);
+        canvas.width = gridSize;
+        canvas.height = gridSize;
+        canvas.style.width = displaySize + 'px';
+        canvas.style.height = displaySize + 'px';
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, gridSize, gridSize);
     }
 
-    function drawGrid() {
-        gctx.clearRect(0,0,gridCanvas.width, gridCanvas.height);
-        gctx.strokeStyle = 'rgba(0,0,0,0.1)';
-        for(let i=0; i<=STATE.cols; i++) {
-            gctx.beginPath(); gctx.moveTo(i*cellSize, 0); gctx.lineTo(i*cellSize, gridCanvas.height); gctx.stroke();
-        }
-        for(let i=0; i<=STATE.rows; i++) {
-            gctx.beginPath(); gctx.moveTo(0, i*cellSize); gctx.lineTo(gridCanvas.width, i*cellSize); gctx.stroke();
-        }
+    // Drawing Logic
+    function getCoords(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        
+        const x = Math.floor(((clientX - rect.left) / displaySize) * gridSize);
+        const y = Math.floor(((clientY - rect.top) / displaySize) * gridSize);
+        return { x, y };
     }
 
-    function addLayer(name) {
-        const off = document.createElement('canvas');
-        off.width = STATE.cols; off.height = STATE.rows;
-        STATE.layers.unshift({ name: name, canvas: off, ctx: off.getContext('2d') });
-        renderLayersList();
-    }
-
-    function renderLayersList() {
-        const list = document.getElementById('layersList');
-        list.innerHTML = '';
-        STATE.layers.forEach((l, i) => {
-            const div = document.createElement('div');
-            div.className = 'layer-item' + (i === STATE.activeLayerIndex ? ' active' : '');
-            div.textContent = l.name;
-            div.onclick = () => { STATE.activeLayerIndex = i; renderLayersList(); };
-            list.appendChild(div);
-        });
-    }
-
-    function renderAll() {
-        ctx.fillStyle = 'white';
-        ctx.fillRect(0,0,mainCanvas.width, mainCanvas.height);
-        for(let i = STATE.layers.length -1; i >= 0; i--) {
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(STATE.layers[i].canvas, 0, 0, mainCanvas.width, mainCanvas.height);
-        }
-    }
-
-    function getMousePos(e) {
-        const rect = mainCanvas.getBoundingClientRect();
-        return {
-            x: Math.floor((e.clientX - rect.left) / cellSize),
-            y: Math.floor((e.clientY - rect.top) / cellSize)
-        };
-    }
-
-    mainCanvas.addEventListener('mousedown', (e) => {
-        STATE.isDrawing = true;
-        const pos = getMousePos(e);
-        draw(pos.x, pos.y);
-    });
-
-    mainCanvas.addEventListener('mousemove', (e) => {
-        if(!STATE.isDrawing) return;
-        const pos = getMousePos(e);
-        draw(pos.x, pos.y);
-    });
-
-    window.addEventListener('mouseup', () => STATE.isDrawing = false);
-
-    function draw(x, y) {
-        if(x < 0 || x >= STATE.cols || y < 0 || y >= STATE.rows) return;
-        const layer = STATE.layers[STATE.activeLayerIndex];
-        if(STATE.tool === 'pencil') {
-            layer.ctx.fillStyle = STATE.color;
-            layer.ctx.fillRect(x, y, 1, 1);
+    function draw(e) {
+        if (!isDrawing) return;
+        const { x, y } = getCoords(e);
+        
+        if (currentTool === 'pencil') {
+            ctx.fillStyle = colorPicker.value;
+            ctx.fillRect(x, y, 1, 1);
         } else {
-            layer.ctx.clearRect(x, y, 1, 1);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(x, y, 1, 1);
         }
-        renderAll();
     }
+
+    // Event Listeners
+    canvas.addEventListener('mousedown', () => isDrawing = true);
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; draw(e); e.preventDefault(); });
+    
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
+    
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
 
     // Tools
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.onclick = () => {
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            STATE.tool = btn.dataset.tool;
-        };
-    });
+    document.getElementById('pencilTool').onclick = () => {
+        currentTool = 'pencil';
+        document.getElementById('pencilTool').classList.add('active');
+        document.getElementById('eraserTool').classList.remove('active');
+    };
 
-    document.getElementById('colorPicker').oninput = (e) => STATE.color = e.target.value;
+    document.getElementById('eraserTool').onclick = () => {
+        currentTool = 'eraser';
+        document.getElementById('eraserTool').classList.add('active');
+        document.getElementById('pencilTool').classList.remove('active');
+    };
 
-    document.getElementById('exportBtn').onclick = () => {
+    document.getElementById('clearBtn').onclick = () => {
+        if(confirm("Clear your workbench?")) initCanvas();
+    };
+
+    sizeSelect.onchange = initCanvas;
+
+    document.getElementById('downloadBtn').onclick = () => {
         const link = document.createElement('a');
-        link.download = 'pixel-art.png';
-        link.href = mainCanvas.toDataURL();
+        link.download = 'craft-pattern.png';
+        link.href = canvas.toDataURL();
         link.click();
     };
 
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2000);
-    }
-
-    // Swatches
-    const colors = ['#ffffff', '#000000', '#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-    const grid = document.getElementById('swatchesGrid');
-    colors.forEach(c => {
-        const s = document.createElement('div');
-        s.className = 'swatch'; s.style.background = c;
-        s.onclick = () => { STATE.color = c; document.getElementById('colorPicker').value = c; };
-        grid.appendChild(s);
-    });
-
-    addLayer('Layer 1');
+    // Initialize on load
     initCanvas();
 </script>
+
 </body>
 </html>
-
