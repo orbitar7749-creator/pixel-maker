@@ -114,20 +114,19 @@
     display: flex;
     overflow: hidden;
     min-height: 0;
-    height: calc(100vh - var(--header-h)); /* explicit height so children can scroll */
+    height: calc(100vh - var(--header-h));
   }
 
-  /* LEFT PANEL — explicit height + overflow so browser enables scroll */
   .left-panel {
     width: var(--panel-w);
     min-width: var(--panel-w);
     max-width: var(--panel-w);
     background: var(--surface);
     border-right: 1px solid var(--border);
-    display: block;          /* block, not flex — simpler scroll model */
-    overflow-y: scroll;      /* always show scrollbar so user knows it scrolls */
+    display: block;
+    overflow-y: scroll;
     overflow-x: hidden;
-    height: 100%;            /* fill parent height exactly */
+    height: 100%;
     flex-shrink: 0;
   }
 
@@ -135,8 +134,8 @@
 
   .panel-section {
     border-bottom: 1px solid var(--border);
-    padding: 10px 12px; /* slightly tighter padding */
-    flex-shrink: 0;     /* sections must not shrink */
+    padding: 10px 12px;
+    flex-shrink: 0;
   }
 
   .panel-title {
@@ -422,7 +421,7 @@
 
   .add-color-btn:hover { border-color: var(--accent2); color: var(--accent); }
 
-  /* IMPORT/EXPORT — always visible at bottom of panel */
+  /* IMPORT/EXPORT */
   .import-export-section {
     border-bottom: none;
     padding: 10px 12px 14px;
@@ -455,7 +454,7 @@
   /* CANVAS AREA */
   .canvas-area {
     flex: 1;
-    min-width: 0;        /* allow shrinking */
+    min-width: 0;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -524,8 +523,8 @@
 
   .layers-list {
     flex: 1;
-    min-height: 0;        /* critical — lets flex child shrink and scroll */
-    overflow-y: scroll;   /* always scrollable */
+    min-height: 0;
+    overflow-y: scroll;
     overflow-x: hidden;
     padding: 8px;
     display: flex;
@@ -879,7 +878,7 @@
       <button class="add-color-btn" id="addColorBtn">+ Save Current Color</button>
     </div>
 
-    <!-- IMPORT / EXPORT — always at the bottom, always visible via scroll -->
+    <!-- IMPORT / EXPORT -->
     <div class="panel-section import-export-section">
       <div class="panel-title">Import / Export</div>
       <button class="action-btn" id="importPngBtn">📂 Import PNG</button>
@@ -1444,16 +1443,23 @@ canvasArea.addEventListener('drop', (e) => {
   reader.readAsDataURL(file);
 });
 
+// ── EXPORT PNG ──────────────────────────────────────────────────────────────
+// Uses the Web Share API on mobile (shows "Save to Files / Photos / …" sheet).
+// Falls back to a standard <a download> link on desktop browsers.
 function exportPNG() {
+  // 1. Merge all visible layers onto an export canvas
   const exportCanvas = document.createElement('canvas');
   exportCanvas.width = STATE.cols; exportCanvas.height = STATE.rows;
   const ec = exportCanvas.getContext('2d');
   ec.fillStyle = '#ffffff'; ec.fillRect(0, 0, STATE.cols, STATE.rows);
   for (let i = STATE.layers.length - 1; i >= 0; i--) {
     const layer = STATE.layers[i]; if (!layer.visible) continue;
-    ec.globalAlpha = layer.opacity; ec.imageSmoothingEnabled = false; ec.drawImage(layer.canvas, 0, 0);
+    ec.globalAlpha = layer.opacity; ec.imageSmoothingEnabled = false;
+    ec.drawImage(layer.canvas, 0, 0);
   }
   ec.globalAlpha = 1;
+
+  // 2. Scale up to A4 dimensions
   const a4w = STATE.orientation === 'portrait' ? A4.pw : A4.ph;
   const a4h = STATE.orientation === 'portrait' ? A4.ph : A4.pw;
   const finalCanvas = document.createElement('canvas');
@@ -1464,11 +1470,37 @@ function exportPNG() {
   const dw = Math.floor(STATE.cols * scale), dh = Math.floor(STATE.rows * scale);
   const dx = Math.floor((a4w - dw) / 2), dy = Math.floor((a4h - dh) / 2);
   fc.drawImage(exportCanvas, dx, dy, dw, dh);
-  const dataUrl = finalCanvas.toDataURL('image/png');
-  const win = window.open('', '_blank');
-  win.document.write('<html><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;"><p style="color:white;font-family:sans-serif;margin-bottom:12px;">Long-press the image below, then tap <b>Save Image</b></p><img src="' + dataUrl + '" style="max-width:100%;image-rendering:pixelated;"></body></html>');
-  win.document.close();
-  showToast('Long-press the image to save!');
+
+  // 3. Convert to Blob then share or download
+  finalCanvas.toBlob(async (blob) => {
+    const filename = 'pixelcraft-export.png';
+    const file = new File([blob], filename, { type: 'image/png' });
+
+    // Mobile: try native share sheet (iOS Safari, Android Chrome)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'PixelCraft Export' });
+        showToast('Shared! 🎨');
+        return;
+      } catch (err) {
+        if (err.name === 'AbortError') { showToast('Share cancelled'); return; }
+        // Network / permission error — fall through to link download
+      }
+    }
+
+    // Desktop / fallback: create a temporary object URL and click it
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = url;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast('Exported as PNG! 💾');
+  }, 'image/png');
+}
+// ────────────────────────────────────────────────────────────────────────────
 
 document.getElementById('exportBtn').addEventListener('click', exportPNG);
 document.getElementById('exportPngBtn').addEventListener('click', exportPNG);
