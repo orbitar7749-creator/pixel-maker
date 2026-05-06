@@ -3,270 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Craft Workbench</title>
+    <title>Pro Craft Studio + Import/Export</title>
     <style>
         :root {
-            --wood: #8d6e63;
-            --clay: #bcaaa4;
-            --accent: #ff7043;
-            --bg: #efebe9;
-            --panel: #ffffff;
+            --bg: #222222;
+            --panel: #333333;
+            --accent: #52b788;
+            --accent-hover: #74c69d;
+            --text: #ffffff;
+            --border: #444;
         }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-            touch-action: none; /* Prevents tablet scrolling while drawing */
+            margin: 0; background: var(--bg); color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden; touch-action: none;
         }
 
-        /* Workbench Header */
         header {
-            background: var(--wood);
-            color: white;
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 10;
+            background: #111; padding: 12px 24px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .logo { font-weight: bold; font-size: 1.2rem; letter-spacing: 1px; }
+        .logo { font-weight: 800; color: var(--accent); letter-spacing: 1px; font-size: 1.1rem; }
 
-        .main-layout {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* Toolbar */
+        .toolbar {
+            width: 75px; background: var(--panel); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center; padding: 15px 0; gap: 12px;
         }
 
-        /* Tool Sidebar */
-        .sidebar {
-            width: 80px;
-            background: var(--panel);
-            border-right: 1px solid #d7ccc8;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px 0;
-            gap: 20px;
+        .tool-btn {
+            width: 50px; height: 50px; border-radius: 10px; border: 1px solid var(--border);
+            background: #2a2a2a; color: white; cursor: pointer; font-size: 1.3rem;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
 
-        .tool {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            border: 2px solid #d7ccc8;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            transition: all 0.2s;
-            background: white;
-        }
-
-        .tool.active {
-            border-color: var(--accent);
-            background: #fff3e0;
-            transform: scale(1.1);
-        }
+        .tool-btn.active { background: var(--accent); border-color: white; transform: scale(1.05); }
 
         /* Workspace */
-        .workspace {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 20px;
-        }
+        .workspace { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: auto; padding: 20px; }
+        .canvas-wrapper { position: relative; background: #fff; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
+        canvas { display: block; image-rendering: pixelated; }
+        #gridLayer { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0.4; }
 
-        .canvas-container {
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            background: white;
-            border: 8px solid white;
-            border-radius: 4px;
-        }
+        /* Right Sidebar */
+        .sidebar { width: 260px; background: var(--panel); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        
+        .section-label { font-size: 0.75rem; color: #aaa; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
+        
+        .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+        .swatch { width: 35px; height: 35px; border-radius: 6px; cursor: pointer; border: 2px solid #111; }
 
-        canvas {
-            display: block;
-            image-rendering: pixelated;
-            cursor: crosshair;
-        }
-
-        /* Right Control Panel */
-        .controls {
-            width: 220px;
-            background: var(--panel);
-            border-left: 1px solid #d7ccc8;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .control-group label {
-            display: block;
-            font-size: 0.8rem;
-            color: #5d4037;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="color"] {
-            width: 100%;
-            height: 40px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
+        .action-group { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
         .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
+            padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
+            font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.2s;
         }
+        .btn-primary { background: var(--accent); color: #111; }
+        .btn-secondary { background: #444; color: white; }
+        .btn:hover { filter: brightness(1.1); }
 
-        .btn:active { transform: scale(0.98); }
+        /* Hidden Input */
+        #fileInput { display: none; }
     </style>
 </head>
 <body>
 
 <header>
-    <div class="logo">CRAFT WORKBENCH</div>
-    <div class="status" id="statusText">Ready to build</div>
+    <div class="logo">CRAFT STUDIO PRO</div>
+    <div style="display: flex; gap: 10px;">
+        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📥 IMPORT</button>
+        <button class="btn btn-primary" id="exportBtn">📤 EXPORT PNG</button>
+        <input type="file" id="fileInput" accept="image/*">
+    </div>
 </header>
 
 <div class="main-layout">
-    <div class="sidebar">
-        <div class="tool active" id="pencilTool" title="Pencil">✏️</div>
-        <div class="tool" id="eraserTool" title="Eraser">🧹</div>
-        <div class="tool" id="clearBtn" title="Clear Canvas">🗑️</div>
+    <div class="toolbar">
+        <button class="tool-btn active" id="pen">✏️</button>
+        <button class="tool-btn" id="eraser">🧹</button>
+        <button class="tool-btn" id="toggleGrid">🌐</button>
     </div>
 
     <div class="workspace">
-        <div class="canvas-container">
-            <canvas id="craftCanvas"></canvas>
+        <div class="canvas-wrapper">
+            <canvas id="mainCanvas"></canvas>
+            <canvas id="gridLayer"></canvas>
         </div>
     </div>
 
-    <div class="controls">
-        <div class="control-group">
-            <label>MATERIAL COLOR</label>
-            <input type="color" id="colorPicker" value="#8d6e63">
+    <div class="sidebar">
+        <div>
+            <div class="section-label">Color</div>
+            <input type="color" id="colorPicker" value="#52b788" style="width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer; background: none;">
         </div>
-        
-        <div class="control-group">
-            <label>CANVAS SIZE</label>
-            <select id="canvasSize" style="width: 100%; padding: 5px;">
+
+        <div>
+            <div class="section-label">Recent Materials</div>
+            <div class="palette" id="historyPalette"></div>
+        </div>
+
+        <div>
+            <div class="section-label">Resolution</div>
+            <select id="res" style="width: 100%; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 6px;">
                 <option value="16">16 x 16 (Small)</option>
                 <option value="32" selected>32 x 32 (Standard)</option>
                 <option value="64">64 x 64 (Detailed)</option>
             </select>
         </div>
 
-        <button class="btn" id="downloadBtn">SAVE DESIGN</button>
+        <div class="action-group">
+            <button class="btn btn-secondary" id="clearBtn">🗑️ CLEAR WORKBENCH</button>
+        </div>
     </div>
 </div>
 
 <script>
-    const canvas = document.getElementById('craftCanvas');
+    const canvas = document.getElementById('mainCanvas');
+    const gCanvas = document.getElementById('gridLayer');
     const ctx = canvas.getContext('2d');
-    const colorPicker = document.getElementById('colorPicker');
-    const sizeSelect = document.getElementById('canvasSize');
+    const gctx = gCanvas.getContext('2d');
+    const fileInput = document.getElementById('fileInput');
     
-    // Config
-    let gridSize = 32;
-    const displaySize = 512; // Visual size on screen
-    let isDrawing = false;
-    let currentTool = 'pencil';
+    let size = 32;
+    let viewSize = Math.min(window.innerWidth - 380, window.innerHeight - 150);
+    if(window.innerWidth < 800) viewSize = 320; // Tablet optimization
 
-    function initCanvas() {
-        gridSize = parseInt(sizeSelect.value);
-        canvas.width = gridSize;
-        canvas.height = gridSize;
-        canvas.style.width = displaySize + 'px';
-        canvas.style.height = displaySize + 'px';
+    let isDrawing = false;
+    let tool = 'pen';
+    let showGrid = true;
+    let history = [];
+
+    function init() {
+        size = parseInt(document.getElementById('res').value);
+        canvas.width = size; canvas.height = size;
+        gCanvas.width = size * 10; gCanvas.height = size * 10;
+        
+        canvas.style.width = viewSize + 'px'; canvas.style.height = viewSize + 'px';
+        gCanvas.style.width = viewSize + 'px'; gCanvas.style.height = viewSize + 'px';
         
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, gridSize, gridSize);
+        ctx.fillRect(0, 0, size, size);
+        drawGrid();
     }
 
-    // Drawing Logic
-    function getCoords(e) {
+    function drawGrid() {
+        gctx.clearRect(0,0,gCanvas.width, gCanvas.height);
+        if(!showGrid) return;
+        gctx.strokeStyle = '#000';
+        gctx.lineWidth = 0.5;
+        for(let i=0; i<=size; i++) {
+            gctx.beginPath(); gctx.moveTo(i*10, 0); gctx.lineTo(i*10, gCanvas.height); gctx.stroke();
+            gctx.beginPath(); gctx.moveTo(0, i*10); gctx.lineTo(gCanvas.width, i*10); gctx.stroke();
+        }
+    }
+
+    function getPos(e) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        
-        const x = Math.floor(((clientX - rect.left) / displaySize) * gridSize);
-        const y = Math.floor(((clientY - rect.top) / displaySize) * gridSize);
-        return { x, y };
+        return {
+            x: Math.floor(((clientX - rect.left) / viewSize) * size),
+            y: Math.floor(((clientY - rect.top) / viewSize) * size)
+        };
     }
 
-    function draw(e) {
-        if (!isDrawing) return;
-        const { x, y } = getCoords(e);
-        
-        if (currentTool === 'pencil') {
-            ctx.fillStyle = colorPicker.value;
+    function paint(e) {
+        if(!isDrawing) return;
+        const {x, y} = getPos(e);
+        if(x < 0 || x >= size || y < 0 || y >= size) return;
+
+        if(tool === 'pen') {
+            ctx.fillStyle = document.getElementById('colorPicker').value;
             ctx.fillRect(x, y, 1, 1);
-        } else {
+        } else if(tool === 'eraser') {
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(x, y, 1, 1);
         }
     }
 
-    // Event Listeners
-    canvas.addEventListener('mousedown', () => isDrawing = true);
-    canvas.addEventListener('touchstart', (e) => { isDrawing = true; draw(e); e.preventDefault(); });
+    // Input/Import Logic
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                ctx.clearRect(0,0,size,size);
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(img, 0, 0, size, size);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // Drawing Listeners
+    const start = (e) => { isDrawing = true; paint(e); };
+    const end = () => { isDrawing = false; saveColor(); };
     
-    window.addEventListener('mouseup', () => isDrawing = false);
-    window.addEventListener('touchend', () => isDrawing = false);
+    canvas.addEventListener('mousedown', start);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('mousemove', paint);
+
+    canvas.addEventListener('touchstart', (e) => { start(e); e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchend', end);
+    canvas.addEventListener('touchmove', (e) => { paint(e); e.preventDefault(); }, {passive: false});
+
+    // Sidebar Controls
+    document.getElementById('toggleGrid').onclick = () => { showGrid = !showGrid; drawGrid(); document.getElementById('toggleGrid').classList.toggle('active'); };
+    document.getElementById('res').onchange = () => { if(confirm("Changing resolution will clear your work. Continue?")) init(); };
+    document.getElementById('clearBtn').onclick = () => { if(confirm("Clear workbench?")) init(); };
     
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchmove', (e) => { draw(e); e.preventDefault(); });
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if(btn.id === 'toggleGrid') return;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            tool = btn.id;
+        });
+    });
 
-    // Tools
-    document.getElementById('pencilTool').onclick = () => {
-        currentTool = 'pencil';
-        document.getElementById('pencilTool').classList.add('active');
-        document.getElementById('eraserTool').classList.remove('active');
-    };
+    function saveColor() {
+        const color = document.getElementById('colorPicker').value;
+        if(!history.includes(color)) {
+            history.unshift(color);
+            if(history.length > 10) history.pop();
+            const container = document.getElementById('historyPalette');
+            container.innerHTML = '';
+            history.forEach(c => {
+                const s = document.createElement('div');
+                s.className = 'swatch'; s.style.background = c;
+                s.onclick = () => document.getElementById('colorPicker').value = c;
+                container.appendChild(s);
+            });
+        }
+    }
 
-    document.getElementById('eraserTool').onclick = () => {
-        currentTool = 'eraser';
-        document.getElementById('eraserTool').classList.add('active');
-        document.getElementById('pencilTool').classList.remove('active');
-    };
-
-    document.getElementById('clearBtn').onclick = () => {
-        if(confirm("Clear your workbench?")) initCanvas();
-    };
-
-    sizeSelect.onchange = initCanvas;
-
-    document.getElementById('downloadBtn').onclick = () => {
+    document.getElementById('exportBtn').onclick = () => {
         const link = document.createElement('a');
-        link.download = 'craft-pattern.png';
-        link.href = canvas.toDataURL();
+        link.download = 'my-craft-pattern.png';
+        link.href = canvas.toDataURL("image/png");
         link.click();
     };
 
-    // Initialize on load
-    initCanvas();
+    init();
 </script>
-
 </body>
 </html>
