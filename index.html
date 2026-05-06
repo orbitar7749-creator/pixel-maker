@@ -1,259 +1,369 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro Craft Studio + Import/Export</title>
-    <style>
-        :root {
-            --bg: #222222;
-            --panel: #333333;
-            --accent: #52b788;
-            --accent-hover: #74c69d;
-            --text: #ffffff;
-            --border: #444;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PixelCraft — Minecraft Papercraft Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f3ef;
+    --surface: #ffffff;
+    --surface2: #f0efe9;
+    --border: #e2e0d8;
+    --border2: #d0cec4;
+    --text: #1a1917;
+    --text2: #6b6860;
+    --accent: #2d6a4f;
+    --accent2: #52b788;
+    --accent-light: #d8f3dc;
+    --danger: #c1392b;
+    --warning: #e67e22;
+    --panel-w: 260px;
+    --layer-w: 220px;
+    --header-h: 48px;
+    --radius: 8px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
 
-        body {
-            margin: 0; background: var(--bg); color: var(--text);
-            font-family: 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden; touch-action: none;
-        }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        header {
-            background: #111; padding: 12px 24px;
-            display: flex; justify-content: space-between; align-items: center;
-            border-bottom: 2px solid var(--accent);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    touch-action: none; /* Crucial for Lenovo Tablet drawing */
+  }
 
-        .logo { font-weight: 800; color: var(--accent); letter-spacing: 1px; font-size: 1.1rem; }
+  /* HEADER */
+  header {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 16px;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
 
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
+  .logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-        /* Toolbar */
-        .toolbar {
-            width: 75px; background: var(--panel); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; align-items: center; padding: 15px 0; gap: 12px;
-        }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 2px;
+    padding: 4px;
+  }
 
-        .tool-btn {
-            width: 50px; height: 50px; border-radius: 10px; border: 1px solid var(--border);
-            background: #2a2a2a; color: white; cursor: pointer; font-size: 1.3rem;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
+  .logo-icon span { background: white; border-radius: 1px; }
+  .logo-icon span:nth-child(2) { background: var(--accent2); }
+  .logo-icon span:nth-child(3) { background: var(--accent2); }
 
-        .tool-btn.active { background: var(--accent); border-color: white; transform: scale(1.05); }
+  .header-center { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
-        /* Workspace */
-        .workspace { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; overflow: auto; padding: 20px; }
-        .canvas-wrapper { position: relative; background: #fff; box-shadow: 0 0 40px rgba(0,0,0,0.6); }
-        canvas { display: block; image-rendering: pixelated; }
-        #gridLayer { position: absolute; top: 0; left: 0; pointer-events: none; opacity: 0.4; }
+  .header-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 5px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
 
-        /* Right Sidebar */
-        .sidebar { width: 260px; background: var(--panel); border-left: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; }
-        
-        .section-label { font-size: 0.75rem; color: #aaa; margin-bottom: 8px; font-weight: bold; text-transform: uppercase; }
-        
-        .palette { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
-        .swatch { width: 35px; height: 35px; border-radius: 6px; cursor: pointer; border: 2px solid #111; }
+  .header-btn:hover { background: var(--accent-light); border-color: var(--accent2); color: var(--accent); }
+  .header-btn.primary { background: var(--accent); color: white; border-color: var(--accent); }
 
-        .action-group { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
-        .btn {
-            padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
-            font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: 0.2s;
-        }
-        .btn-primary { background: var(--accent); color: #111; }
-        .btn-secondary { background: #444; color: white; }
-        .btn:hover { filter: brightness(1.1); }
+  .app-body { flex: 1; display: flex; overflow: hidden; }
 
-        /* Hidden Input */
-        #fileInput { display: none; }
-    </style>
+  /* LEFT PANEL */
+  .left-panel {
+    width: var(--panel-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .panel-section { border-bottom: 1px solid var(--border); padding: 12px; }
+  .panel-title { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text2); margin-bottom: 10px; }
+
+  .setting-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .setting-label { font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace; }
+  .setting-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 4px; font-family: 'DM Mono', monospace; width: 60px; text-align: center; }
+
+  .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .tool-btn { padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface2); cursor: pointer; text-align: center; font-size: 10px; font-family: 'DM Mono', monospace; }
+  .tool-btn.active { background: var(--accent); color: white; }
+
+  /* CANVAS AREA */
+  .canvas-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .canvas-wrapper { position: relative; box-shadow: var(--shadow-lg); background: white; }
+  #mainCanvas { display: block; image-rendering: pixelated; }
+  #gridCanvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+
+  /* RIGHT PANEL - LAYERS */
+  .right-panel { width: var(--layer-w); background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; }
+  .layers-list { flex: 1; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .layer-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: var(--surface2); border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
+  .layer-item.active { border-color: var(--accent); background: var(--accent-light); }
+  .layer-thumb { width: 30px; height: 30px; border: 1px solid var(--border); background: white; image-rendering: pixelated; }
+
+  /* MODALS & TOAST */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; padding: 25px; border-radius: 12px; width: 320px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 16px; border-radius: 20px; font-size: 12px; opacity: 0; transition: 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  
+  #fileInput, #importFileInput { display: none; }
+</style>
 </head>
 <body>
 
 <header>
-    <div class="logo">CRAFT STUDIO PRO</div>
-    <div style="display: flex; gap: 10px;">
-        <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">📥 IMPORT</button>
-        <button class="btn btn-primary" id="exportBtn">📤 EXPORT PNG</button>
-        <input type="file" id="fileInput" accept="image/*">
-    </div>
+  <div class="logo">
+    <div class="logo-icon"><span></span><span></span><span></span><span></span></div>
+    PixelCraft
+  </div>
+  <div class="header-center">
+    <button class="header-btn" id="undoBtn">↩ Undo</button>
+    <button class="header-btn" id="redoBtn">↪ Redo</button>
+    <button class="header-btn primary" id="exportBtn">⬇ Export PNG</button>
+  </div>
 </header>
 
-<div class="main-layout">
-    <div class="toolbar">
-        <button class="tool-btn active" id="pen">✏️</button>
-        <button class="tool-btn" id="eraser">🧹</button>
-        <button class="tool-btn" id="toggleGrid">🌐</button>
+<div class="app-body">
+  <div class="left-panel">
+    <div class="panel-section">
+      <div class="panel-title">Grid Settings</div>
+      <div class="setting-row"><span class="setting-label">Cols</span><input type="number" class="setting-input" id="gridCols" value="32"></div>
+      <div class="setting-row"><span class="setting-label">Rows</span><input type="number" class="setting-input" id="gridRows" value="32"></div>
+      <button class="header-btn" id="applyGridBtn" style="width:100%">Update Grid</button>
     </div>
 
-    <div class="workspace">
-        <div class="canvas-wrapper">
-            <canvas id="mainCanvas"></canvas>
-            <canvas id="gridLayer"></canvas>
-        </div>
+    <div class="panel-section">
+      <div class="panel-title">Tools</div>
+      <div class="tools-grid">
+        <button class="tool-btn active" data-tool="pencil">✏️ Pencil</button>
+        <button class="tool-btn" data-tool="eraser">🧹 Eraser</button>
+        <button class="tool-btn" data-tool="picker">💉 Picker</button>
+        <button class="tool-btn" id="toggleGridBtn">🌐 Grid</button>
+      </div>
     </div>
 
-    <div class="sidebar">
-        <div>
-            <div class="section-label">Color</div>
-            <input type="color" id="colorPicker" value="#52b788" style="width: 100%; height: 50px; border: none; border-radius: 8px; cursor: pointer; background: none;">
-        </div>
-
-        <div>
-            <div class="section-label">Recent Materials</div>
-            <div class="palette" id="historyPalette"></div>
-        </div>
-
-        <div>
-            <div class="section-label">Resolution</div>
-            <select id="res" style="width: 100%; padding: 10px; background: #222; color: white; border: 1px solid #444; border-radius: 6px;">
-                <option value="16">16 x 16 (Small)</option>
-                <option value="32" selected>32 x 32 (Standard)</option>
-                <option value="64">64 x 64 (Detailed)</option>
-            </select>
-        </div>
-
-        <div class="action-group">
-            <button class="btn btn-secondary" id="clearBtn">🗑️ CLEAR WORKBENCH</button>
-        </div>
+    <div class="panel-section">
+      <div class="panel-title">Color</div>
+      <input type="color" id="nativeColorPicker" style="width:100%; height:40px; border:none; cursor:pointer;">
+      <div class="panel-title" style="margin-top:10px">Import</div>
+      <button class="header-btn" style="width:100%" id="importPngBtn">📂 Import PNG</button>
     </div>
+  </div>
+
+  <div class="canvas-area">
+    <div class="canvas-wrapper">
+      <canvas id="mainCanvas"></canvas>
+      <canvas id="gridCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="panel-title" style="padding:12px">Layers</div>
+    <div class="layers-list" id="layersList"></div>
+    <div style="padding:8px; display:flex; gap:4px;">
+        <button class="header-btn" id="addLayerBtn" style="flex:1">+ Add</button>
+        <button class="header-btn" id="delLayerBtn">🗑</button>
+    </div>
+  </div>
 </div>
 
+<input type="file" id="importFileInput" accept="image/*">
+<div class="toast" id="toast"></div>
+
 <script>
-    const canvas = document.getElementById('mainCanvas');
-    const gCanvas = document.getElementById('gridLayer');
-    const ctx = canvas.getContext('2d');
-    const gctx = gCanvas.getContext('2d');
-    const fileInput = document.getElementById('fileInput');
-    
-    let size = 32;
-    let viewSize = Math.min(window.innerWidth - 380, window.innerHeight - 150);
-    if(window.innerWidth < 800) viewSize = 320; // Tablet optimization
+const STATE = {
+  cols: 32, rows: 32, zoom: 1, tool: 'pencil',
+  color: '#2d6a4f', layers: [], activeLayerIndex: 0,
+  undoStack: [], redoStack: [], isDrawing: false, showGrid: true
+};
 
-    let isDrawing = false;
-    let tool = 'pen';
-    let showGrid = true;
-    let history = [];
+const mainCanvas = document.getElementById('mainCanvas');
+const gridCanvas = document.getElementById('gridCanvas');
+const ctx = mainCanvas.getContext('2d');
+const gctx = gridCanvas.getContext('2d');
 
-    function init() {
-        size = parseInt(document.getElementById('res').value);
-        canvas.width = size; canvas.height = size;
-        gCanvas.width = size * 10; gCanvas.height = size * 10;
-        
-        canvas.style.width = viewSize + 'px'; canvas.style.height = viewSize + 'px';
-        gCanvas.style.width = viewSize + 'px'; gCanvas.style.height = viewSize + 'px';
-        
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, size, size);
-        drawGrid();
-    }
+function initCanvas() {
+  const containerW = document.querySelector('.canvas-area').clientWidth - 40;
+  const containerH = document.querySelector('.canvas-area').clientHeight - 40;
+  const cellSize = Math.floor(Math.min(containerW / STATE.cols, containerH / STATE.rows));
+  
+  mainCanvas.width = STATE.cols; mainCanvas.height = STATE.rows;
+  gridCanvas.width = STATE.cols * cellSize; gridCanvas.height = STATE.rows * cellSize;
+  
+  mainCanvas.style.width = (STATE.cols * cellSize) + 'px';
+  mainCanvas.style.height = (STATE.rows * cellSize) + 'px';
+  renderAll();
+}
 
-    function drawGrid() {
-        gctx.clearRect(0,0,gCanvas.width, gCanvas.height);
-        if(!showGrid) return;
-        gctx.strokeStyle = '#000';
-        gctx.lineWidth = 0.5;
-        for(let i=0; i<=size; i++) {
-            gctx.beginPath(); gctx.moveTo(i*10, 0); gctx.lineTo(i*10, gCanvas.height); gctx.stroke();
-            gctx.beginPath(); gctx.moveTo(0, i*10); gctx.lineTo(gCanvas.width, i*10); gctx.stroke();
-        }
-    }
+function createLayer(name) {
+  const can = document.createElement('canvas');
+  can.width = STATE.cols; can.height = STATE.rows;
+  return { name: name || `Layer ${STATE.layers.length+1}`, canvas: can, ctx: can.getContext('2d'), visible: true };
+}
 
-    function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return {
-            x: Math.floor(((clientX - rect.left) / viewSize) * size),
-            y: Math.floor(((clientY - rect.top) / viewSize) * size)
+function renderAll() {
+  ctx.clearRect(0, 0, STATE.cols, STATE.rows);
+  ctx.fillStyle = "white"; ctx.fillRect(0,0,STATE.cols, STATE.rows);
+  
+  for (let i = STATE.layers.length - 1; i >= 0; i--) {
+    if (STATE.layers[i].visible) ctx.drawImage(STATE.layers[i].canvas, 0, 0);
+  }
+  drawGrid();
+  updateLayerUI();
+}
+
+function drawGrid() {
+  gctx.clearRect(0,0,gridCanvas.width, gridCanvas.height);
+  if(!STATE.showGrid) return;
+  const cW = gridCanvas.width / STATE.cols;
+  const cH = gridCanvas.height / STATE.rows;
+  gctx.strokeStyle = "rgba(0,0,0,0.1)";
+  for(let i=0; i<=STATE.cols; i++) { gctx.beginPath(); gctx.moveTo(i*cW, 0); gctx.lineTo(i*cW, gridCanvas.height); gctx.stroke(); }
+  for(let i=0; i<=STATE.rows; i++) { gctx.beginPath(); gctx.moveTo(0, i*cH); gctx.lineTo(gridCanvas.width, i*cH); gctx.stroke(); }
+}
+
+function getCell(e) {
+  const rect = gridCanvas.getBoundingClientRect();
+  const x = Math.floor(((e.touches ? e.touches[0].clientX : e.clientX) - rect.left) / (rect.width / STATE.cols));
+  const y = Math.floor(((e.touches ? e.touches[0].clientY : e.clientY) - rect.top) / (rect.height / STATE.rows));
+  return {x, y};
+}
+
+function paint(e) {
+  if(!STATE.isDrawing) return;
+  const {x, y} = getCell(e);
+  const layer = STATE.layers[STATE.activeLayerIndex];
+  if(!layer || x<0 || x>=STATE.cols || y<0 || y>=STATE.rows) return;
+
+  if(STATE.tool === 'pencil') {
+    layer.ctx.fillStyle = STATE.color;
+    layer.ctx.fillRect(x, y, 1, 1);
+  } else if(STATE.tool === 'eraser') {
+    layer.ctx.clearRect(x, y, 1, 1);
+  } else if(STATE.tool === 'picker') {
+    const data = ctx.getImageData(x, y, 1, 1).data;
+    STATE.color = `#${((1 << 24) + (data[0] << 16) + (data[1] << 8) + data[2]).toString(16).slice(1)}`;
+    document.getElementById('nativeColorPicker').value = STATE.color;
+  }
+  renderAll();
+}
+
+function updateLayerUI() {
+  const list = document.getElementById('layersList');
+  list.innerHTML = '';
+  STATE.layers.forEach((l, i) => {
+    const div = document.createElement('div');
+    div.className = `layer-item ${i === STATE.activeLayerIndex ? 'active' : ''}`;
+    div.innerHTML = `<canvas class="layer-thumb" id="t${i}"></canvas><span>${l.name}</span>`;
+    div.onclick = () => { STATE.activeLayerIndex = i; renderAll(); };
+    list.appendChild(div);
+    const t = document.getElementById(`t${i}`);
+    t.width = 30; t.height = 30;
+    t.getContext('2d').drawImage(l.canvas, 0, 0, 30, 30);
+  });
+}
+
+// Events
+gridCanvas.addEventListener('mousedown', (e) => { STATE.isDrawing = true; paint(e); });
+window.addEventListener('mouseup', () => STATE.isDrawing = false);
+gridCanvas.addEventListener('mousemove', paint);
+
+gridCanvas.addEventListener('touchstart', (e) => { STATE.isDrawing = true; paint(e); e.preventDefault(); }, {passive: false});
+gridCanvas.addEventListener('touchmove', (e) => { paint(e); e.preventDefault(); }, {passive: false});
+window.addEventListener('touchend', () => STATE.isDrawing = false);
+
+document.getElementById('addLayerBtn').onclick = () => { STATE.layers.unshift(createLayer()); renderAll(); };
+document.getElementById('delLayerBtn').onclick = () => { if(STATE.layers.length > 1) { STATE.layers.splice(STATE.activeLayerIndex, 1); STATE.activeLayerIndex = 0; renderAll(); } };
+document.getElementById('toggleGridBtn').onclick = () => { STATE.showGrid = !STATE.showGrid; renderAll(); };
+document.getElementById('applyGridBtn').onclick = () => { 
+    STATE.cols = parseInt(document.getElementById('gridCols').value); 
+    STATE.rows = parseInt(document.getElementById('gridRows').value); 
+    STATE.layers.forEach(l => { l.canvas.width = STATE.cols; l.canvas.height = STATE.rows; l.ctx = l.canvas.getContext('2d'); });
+    initCanvas(); 
+};
+
+document.getElementById('nativeColorPicker').oninput = (e) => STATE.color = e.target.value;
+
+document.getElementById('importPngBtn').onclick = () => document.getElementById('importFileInput').click();
+document.getElementById('importFileInput').onchange = (e) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const img = new Image();
+        img.onload = () => {
+            const l = createLayer("Imported");
+            l.ctx.drawImage(img, 0, 0, STATE.cols, STATE.rows);
+            STATE.layers.unshift(l);
+            renderAll();
         };
-    }
-
-    function paint(e) {
-        if(!isDrawing) return;
-        const {x, y} = getPos(e);
-        if(x < 0 || x >= size || y < 0 || y >= size) return;
-
-        if(tool === 'pen') {
-            ctx.fillStyle = document.getElementById('colorPicker').value;
-            ctx.fillRect(x, y, 1, 1);
-        } else if(tool === 'eraser') {
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(x, y, 1, 1);
-        }
-    }
-
-    // Input/Import Logic
-    fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const img = new Image();
-            img.onload = () => {
-                ctx.clearRect(0,0,size,size);
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(img, 0, 0, size, size);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
+        img.src = ev.target.result;
     };
+    reader.readAsDataURL(e.target.files[0]);
+};
 
-    // Drawing Listeners
-    const start = (e) => { isDrawing = true; paint(e); };
-    const end = () => { isDrawing = false; saveColor(); };
-    
-    canvas.addEventListener('mousedown', start);
-    window.addEventListener('mouseup', end);
-    canvas.addEventListener('mousemove', paint);
+document.getElementById('exportBtn').onclick = () => {
+    const link = document.createElement('a');
+    link.download = 'pixelcraft-art.png';
+    link.href = mainCanvas.toDataURL();
+    link.click();
+};
 
-    canvas.addEventListener('touchstart', (e) => { start(e); e.preventDefault(); }, {passive: false});
-    window.addEventListener('touchend', end);
-    canvas.addEventListener('touchmove', (e) => { paint(e); e.preventDefault(); }, {passive: false});
-
-    // Sidebar Controls
-    document.getElementById('toggleGrid').onclick = () => { showGrid = !showGrid; drawGrid(); document.getElementById('toggleGrid').classList.toggle('active'); };
-    document.getElementById('res').onchange = () => { if(confirm("Changing resolution will clear your work. Continue?")) init(); };
-    document.getElementById('clearBtn').onclick = () => { if(confirm("Clear workbench?")) init(); };
-    
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if(btn.id === 'toggleGrid') return;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            tool = btn.id;
-        });
-    });
-
-    function saveColor() {
-        const color = document.getElementById('colorPicker').value;
-        if(!history.includes(color)) {
-            history.unshift(color);
-            if(history.length > 10) history.pop();
-            const container = document.getElementById('historyPalette');
-            container.innerHTML = '';
-            history.forEach(c => {
-                const s = document.createElement('div');
-                s.className = 'swatch'; s.style.background = c;
-                s.onclick = () => document.getElementById('colorPicker').value = c;
-                container.appendChild(s);
-            });
-        }
-    }
-
-    document.getElementById('exportBtn').onclick = () => {
-        const link = document.createElement('a');
-        link.download = 'my-craft-pattern.png';
-        link.href = canvas.toDataURL("image/png");
-        link.click();
+document.querySelectorAll('.tool-btn[data-tool]').forEach(b => {
+    b.onclick = () => {
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        b.classList.add('active');
+        STATE.tool = b.dataset.tool;
     };
+});
 
-    init();
+window.onresize = initCanvas;
+STATE.layers.push(createLayer("Background"));
+initCanvas();
 </script>
 </body>
 </html>
