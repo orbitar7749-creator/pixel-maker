@@ -1464,10 +1464,11 @@ function exportPNG() {
   const dw = Math.floor(STATE.cols * scale), dh = Math.floor(STATE.rows * scale);
   const dx = Math.floor((a4w - dw) / 2), dy = Math.floor((a4h - dh) / 2);
   fc.drawImage(exportCanvas, dx, dy, dw, dh);
-  const link = document.createElement('a');
-  link.download = 'pixelcraft-export.png'; link.href = finalCanvas.toDataURL('image/png'); link.click();
-  showToast('Exported as PNG!');
-}
+  const dataUrl = finalCanvas.toDataURL('image/png');
+  const win = window.open('', '_blank');
+  win.document.write('<html><body style="margin:0;background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;"><p style="color:white;font-family:sans-serif;margin-bottom:12px;">Long-press the image below, then tap <b>Save Image</b></p><img src="' + dataUrl + '" style="max-width:100%;image-rendering:pixelated;"></body></html>');
+  win.document.close();
+  showToast('Long-press the image to save!');
 
 document.getElementById('exportBtn').addEventListener('click', exportPNG);
 document.getElementById('exportPngBtn').addEventListener('click', exportPNG);
