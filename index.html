@@ -113,24 +113,25 @@
     flex: 1;
     display: flex;
     overflow: hidden;
-    min-height: 0; /* critical for flex children to shrink */
+    min-height: 0;
+    height: calc(100vh - var(--header-h)); /* explicit height so children can scroll */
   }
 
-  /* LEFT PANEL — KEY FIX: proper flex column + overflow scroll */
+  /* LEFT PANEL — explicit height + overflow so browser enables scroll */
   .left-panel {
     width: var(--panel-w);
     min-width: var(--panel-w);
+    max-width: var(--panel-w);
     background: var(--surface);
     border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;   /* scrollable */
+    display: block;          /* block, not flex — simpler scroll model */
+    overflow-y: scroll;      /* always show scrollbar so user knows it scrolls */
     overflow-x: hidden;
+    height: 100%;            /* fill parent height exactly */
     flex-shrink: 0;
   }
 
-  /* Make sure Import/Export is always at bottom but still reachable via scroll */
-  .left-panel-spacer { flex: 1; }
+  .left-panel-spacer { display: none; }
 
   .panel-section {
     border-bottom: 1px solid var(--border);
@@ -454,6 +455,8 @@
   /* CANVAS AREA */
   .canvas-area {
     flex: 1;
+    min-width: 0;        /* allow shrinking */
+    min-height: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -461,7 +464,7 @@
     background: var(--bg);
     position: relative;
     overflow: hidden;
-    min-width: 0;
+    height: 100%;
   }
 
   .canvas-wrapper {
@@ -499,12 +502,14 @@
   .right-panel {
     width: var(--layer-w);
     min-width: var(--layer-w);
+    max-width: var(--layer-w);
     background: var(--surface);
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
     overflow: hidden;
+    height: 100%;
   }
 
   .right-panel-header {
@@ -514,11 +519,14 @@
     align-items: center;
     justify-content: space-between;
     flex-shrink: 0;
+    height: 40px;
   }
 
   .layers-list {
     flex: 1;
-    overflow-y: auto;
+    min-height: 0;        /* critical — lets flex child shrink and scroll */
+    overflow-y: scroll;   /* always scrollable */
+    overflow-x: hidden;
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -746,9 +754,10 @@
 
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
 
   .canvas-area.drag-over { background: var(--accent-light); }
   #importFileInput { display: none; }
