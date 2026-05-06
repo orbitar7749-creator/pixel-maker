@@ -466,12 +466,14 @@
     font-family: 'DM Mono', monospace;
     font-size: 12px;
     color: var(--text);
-    margin-bottom: 6px;
+    margin-bottom: 0; /* Change this from 6px to 0 */
     display: flex;
     align-items: center;
+    justify-content: center; /* Add this to center the text */
     gap: 8px;
     transition: all 0.15s;
   }
+
 
   .action-btn:hover { background: var(--accent-light); border-color: var(--accent2); color: var(--accent); }
   .action-btn.export { background: var(--accent); color: white; border-color: var(--accent); }
@@ -940,13 +942,22 @@
     </div>
 
     <!-- IMPORT / EXPORT -->
-    <div class="panel-section">
-      <div class="panel-title">Import / Export</div>
-      <button class="action-btn" id="importPngBtn">📂 Import PNG</button>
-      <button class="action-btn export" id="exportPngBtn">💾 Export PNG</button>
+     <div class="left-panel">
+  <div class="left-panel">
+
+    <div class="panel-section" style="border-top: none;">
+      <div class="panel-title">File Actions</div>
+      <div style="display: flex; gap: 8px;">
+        <button class="action-btn" id="importPngBtn" style="flex: 1;">📂 Import</button>
+        <button class="action-btn export" id="exportPngBtn" style="flex: 1;">💾 Export</button>
+      </div>
     </div>
 
-  </div>
+    <div class="panel-section">
+...
+
+
+
 
   <!-- CANVAS -->
   <div class="canvas-area" id="canvasArea">
